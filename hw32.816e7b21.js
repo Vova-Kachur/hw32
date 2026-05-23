@@ -1,32 +1,42 @@
-const API_KEY = '55981537-d72f43f268783da353d1d0a05';
-const BASE_URL = 'https://pixabay.com/api/';
+const API_KEY = "55981537-d72f43f268783da353d1d0a05";
+const BASE_URL = "https://pixabay.com/api/";
 const form = document.getElementById('search-form');
 const input = document.getElementById('search-input');
-const gallery = document.getElementById('gallery');
+const gallery = document.querySelector('.gallery');
 const loadMoreBtn = document.getElementById('load-more');
-let searchQuery = '';
 let page = 1;
+let query = '';
 const perPage = 12;
-async function fetchImages() {
-    try {
-        const response = await fetch(`${BASE_URL}?key=${API_KEY}&q=${searchQuery}&image_type=photo&page=${page}&per_page=${perPage}`);
-        const data = await response.json();
+function fetchImages() {
+    fetch(`${BASE_URL}?key=${API_KEY}&q=${query}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=${perPage}`).then((response)=>{
+        return response.json();
+    }).then((data)=>{
         renderImages(data.hits);
-        if (data.totalHits > page * perPage) loadMoreBtn.classList.remove('hidden');
+        if (page * perPage < data.totalHits) loadMoreBtn.classList.remove('hidden');
         else loadMoreBtn.classList.add('hidden');
-    } catch (error) {
+        localStorage.setItem('query', query);
+        localStorage.setItem('page', page);
+    }).catch((error)=>{
         console.log(error);
-    }
+    });
 }
 function renderImages(images) {
     const markup = images.map((image)=>{
         return `
       <div class="card">
-        <img src="${image.webformatURL}" alt="${image.tags}">
+
+        <img
+          src="${image.webformatURL}"
+          alt="${image.tags}"
+        >
+
         <div class="info">
-          <p><b>Likes:</b> ${image.likes}</p>
-          <p><b>Views:</b> ${image.views}</p>
+          <p>Likes: ${image.likes}</p>
+          <p>Views: ${image.views}</p>
+          <p>Comments: ${image.comments}</p>
+          <p>Downloads: ${image.downloads}</p>
         </div>
+
       </div>
     `;
     }).join('');
@@ -34,28 +44,25 @@ function renderImages(images) {
 }
 form.addEventListener('submit', (event)=>{
     event.preventDefault();
-    searchQuery = input.value.trim();
-    if (!searchQuery) return;
+    query = input.value.trim();
+    if (!query) return;
     page = 1;
     gallery.innerHTML = '';
-    localStorage.setItem('query', searchQuery);
-    localStorage.setItem('page', page);
     fetchImages();
 });
 loadMoreBtn.addEventListener('click', ()=>{
     page += 1;
-    localStorage.setItem('page', page);
     fetchImages();
 });
 window.addEventListener('load', ()=>{
     const savedQuery = localStorage.getItem('query');
     const savedPage = localStorage.getItem('page');
     if (savedQuery) {
-        searchQuery = savedQuery;
+        query = savedQuery;
         input.value = savedQuery;
     }
     if (savedPage) page = Number(savedPage);
-    if (searchQuery) fetchImages();
+    if (query) fetchImages();
 });
 
 //# sourceMappingURL=hw32.816e7b21.js.map
